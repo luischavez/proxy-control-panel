@@ -1,0 +1,3 @@
+ssh -i ~/Downloads/demo.cer ubuntu@3.144.235.74
+scp -i ~/Downloads/demo.cer ~/code/web/proxy-control-panel.zip ubuntu@3.144.235.74:/tmp
+ssh -i ~/Downloads/demo.cer ubuntu@3.144.235.74 "sudo /bin/deploy-proxy-control-panel.sh devtesting.website proxy-control-panel"
