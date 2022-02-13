@@ -18,6 +18,7 @@ ufw allow https
 
 ufw enable
 
+mkdir /ssl
 mkdir /etc/proxy-config
 chown -R www-data:www-data /etc/proxy-config
 

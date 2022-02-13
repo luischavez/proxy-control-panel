@@ -42,9 +42,9 @@ server {
                         proxy_set_header X-Forwarded-Port  $server_port;
                     @endif
 
-                    proxy_connect_timeout              {{ $location->connect_timeout }}s;
-                    proxy_send_timeout                 {{ $location->send_timeout }}s;
-                    proxy_read_timeout                 {{ $location->read_timeout }}s;
+                    proxy_connect_timeout              {{ $location->connect_timeout ?? 60 }}s;
+                    proxy_send_timeout                 {{ $location->send_timeout ?? 60 }}s;
+                    proxy_read_timeout                 {{ $location->read_timeout ?? 60 }}s;
                     @break
             @endswitch
         }

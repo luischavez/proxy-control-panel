@@ -40,7 +40,7 @@ class Subdomains extends Section
         }
 
         $newLocations = $this->locations;
-        foreach ($this->editingModel->locations as $location) {
+	foreach ($this->editingModel->locations as $location) {
             if (!isset($newLocations[$location->id])) {
                 $location->delete();
             } else {
@@ -50,9 +50,11 @@ class Subdomains extends Section
             }
         }
 
-        foreach ($newLocations as $location) {
+	foreach ($newLocations as $location) {
             $location = $this->editingModel->locations()->create($location);
-        }
+	}
+
+	$this->editingModel->name = strtolower($this->editingModel->name);
     }
 
     public function onLoadSection(array $payload): void
@@ -67,7 +69,8 @@ class Subdomains extends Section
             $query->whereDomainId($this->domain->id);
         }
 
-        $query->orderBy('domain_id');
+	$query->orderBy('domain_id');
+	$query->orderBy('name');
 
         return $query;
     }
@@ -105,7 +108,8 @@ class Subdomains extends Section
         $rules = [
             'editingModel.name'                         => [
                 'required',
-                'string',
+		'string',
+		'regex:/^[a-z][a-z0-9]+$/',
                 'max:128',
                 Rule::unique('subdomains', 'name')->where(function ($query) {
                     if ($this->editingModel) {
@@ -120,9 +124,9 @@ class Subdomains extends Section
             'editingModel.locations.*.type'             => 'required',
             'editingModel.locations.*.subtype'          => 'nullable',
             'editingModel.locations.*.target'           => 'required',
-            'editingModel.locations.*.connect_timeout'  => 'int',
-            'editingModel.locations.*.send_timeout'     => 'int',
-            'editingModel.locations.*.read_timeout'     => 'int',
+            'editingModel.locations.*.connect_timeout'  => 'sometimes|integer',
+            'editingModel.locations.*.send_timeout'     => 'sometimes|integer',
+            'editingModel.locations.*.read_timeout'     => 'sometimes|integer',
             'editingModel.locations.*.enable_x_headers' => 'boolean',
         ];
 

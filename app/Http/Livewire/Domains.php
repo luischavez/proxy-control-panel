@@ -42,9 +42,9 @@ class Domains extends Section
         $rules = [
             'editingModel.name'                => 'required|string|max:128|unique:domains,name',
             'editingModel.enable_ssl'          => 'nullable|boolean',
-            'editingModel.force_https'         => 'prohibited_if:editingModel.enable_ssl,false|boolean',
-            'editingModel.ssl_cert_location'   => 'nullable',
-            'editingModel.ssl_key_location'    => 'nullable',
+            'editingModel.force_https'         => 'required_unless:editingModel.enable_ssl,true|boolean',
+            'editingModel.ssl_cert_location'   => 'required_if:editingModel.enable_ssl,true',
+            'editingModel.ssl_key_location'    => 'required_if:editingModel.enable_ssl,true',
         ];
 
         if ($this->editingModel?->id !== null) {

@@ -28,19 +28,21 @@ class Home extends Component
 
             $servers = [];
 
-            $letsEncryptPath = config('app.letsencrypt_cert_path');
+	    $letsEncryptPath = config('app.letsencrypt_cert_path');
 
-            foreach ($domains as $domain) {
+	    $errors = [];
+	    
+	    foreach ($domains as $domain) {
+		if ($domain->enable_ssl
+                     && (empty($domain->ssl_cert_location) || empty($domain->ssl_key_location))
+                     && !File::exists($domain->ssl_cert_location)
+                     && !File::exists($domain->ssl_key_location)) {
+                    $errors[] = "cert not found $domain->name";
+		}
+
                 foreach ($domain->subdomains as $subdomain) {
-                    if ($subdomain->locations->count() === 0) {
+		    if ($subdomain->locations->count() === 0) {
                         continue;
-                    }
-
-                    if ($domain->enable_ssl
-                        && (empty($domain->ssl_cert_location) || empty($domain->ssl_key_location))
-                        && !File::exists($letsEncryptPath."/{$subdomain->name}.{$domain->name}/fullchain.pem")) {
-                        exec("sudo generate-cert-subdomain.sh {$domain->name} {$subdomain->name}", $certOutput, $certResult);
-                        sleep(2);
                     }
 
                     $servers[$subdomain->name.'.'.$domain->name] = view('nginx.server', compact('subdomain'))->render();
@@ -55,13 +57,28 @@ class Home extends Component
             }
 
             foreach ($servers as $name => $server) {
-                file_put_contents("$configPath/$name", $server);
-            }
+	        file_put_contents("$configPath/$name", $server);
+
+		exec('sudo nginx -t', $checkOutput, $checkResult);
+		if ($checkResult != 0) {
+		    $errors[] = "Error in configuration: $name";
+		    File::delete("$configPath/$name");
+                }
+	    }
 
             exec('sudo nginx -t', $checkOutput, $checkResult);
-            exec('sudo service nginx -s reload', $serviceOutput, $serviceResult);
+	    if ($checkResult != 0) {
+	        $errors[] = $checkOutput;
+	    } else {
+	        exec('sudo service nginx -s reload', $serviceOutput, $serviceResult);
+                $this->emit('alert', 'success', __('pages.success.generated_title'), __('pages.success.generated_message'));
+	    }
 
-            $this->emit('alert', 'success', __('pages.success.generated_title'), __('pages.success.generated_message'));
+	    if (!empty($errors)) {
+		$errors = implode("<br>", $errors);
+		Log::error($errors);
+	    	$this->emit('alert', 'error', __('pages.errors.generated_title'), $errors);
+	    }
         } catch (Throwable $ex) {
             Log::error($ex->getMessage());
             $this->emit('alert', 'error', __('pages.errors.generated_title'), __('pages.errors.generated_message'));

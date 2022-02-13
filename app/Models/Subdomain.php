@@ -55,7 +55,7 @@ class Subdomain extends Model
                 'loggeable_type' => class_basename($model),
                 'action'        => 'updated',
                 'diff'          => json_encode($diff),
-            ]);
+	    ]);
         });
 
         static::deleted(function ($model) {
