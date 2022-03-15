@@ -32,6 +32,15 @@ class Subdomains extends Section
         }
     }
 
+    public function delete(int $id): void
+    {
+        $subdomain = Subdomain::findOrFail($id);
+        foreach ($subdomain->locations as $location) {
+            $location->delete();
+        }
+        parent::delete($id);
+    }
+
     protected function beforeSave(): void
     {
         if ($this->editingModel?->id === null) {
@@ -40,7 +49,7 @@ class Subdomains extends Section
         }
 
         $newLocations = $this->locations;
-	foreach ($this->editingModel->locations as $location) {
+        foreach ($this->editingModel->locations as $location) {
             if (!isset($newLocations[$location->id])) {
                 $location->delete();
             } else {
@@ -50,11 +59,20 @@ class Subdomains extends Section
             }
         }
 
-	foreach ($newLocations as $location) {
-            $location = $this->editingModel->locations()->create($location);
-	}
+        foreach ($newLocations as $location) {
+            $location['path'] = empty($location['path']) ? '/' : $location['path'];
+            $location['type'] = empty($location['type']) ? 'proxy' : $location['type'];
+            $location['subtype'] = empty($location['subtype']) ? 'http' : $location['subtype'];
+            $location['target'] = empty($location['target']) ? '0.0.0.0:1234' : $location['target'];
+            $location['connect_timeout'] = empty($location['connect_timeout']) ? 60 : $location['connect_timeout'];
+            $location['send_timeout'] = empty($location['send_timeout']) ? 60 : $location['send_timeout'];
+            $location['read_timeout'] = empty($location['read_timeout']) ? 60 : $location['read_timeout'];
+            $location['enable_x_headers'] = $location['enable_x_headers'] ? true : $location['enable_x_headers'];
 
-	$this->editingModel->name = strtolower($this->editingModel->name);
+            $location = $this->editingModel->locations()->create($location);
+        }
+
+        $this->editingModel->name = strtolower($this->editingModel->name);
     }
 
     public function onLoadSection(array $payload): void
@@ -69,8 +87,8 @@ class Subdomains extends Section
             $query->whereDomainId($this->domain->id);
         }
 
-	$query->orderBy('domain_id');
-	$query->orderBy('name');
+        $query->orderBy('domain_id');
+        $query->orderBy('name');
 
         return $query;
     }
@@ -108,8 +126,8 @@ class Subdomains extends Section
         $rules = [
             'editingModel.name'                         => [
                 'required',
-		'string',
-		'regex:/^[a-z][a-z0-9]+$/',
+                'string',
+                'regex:/^[a-z][a-z0-9]+$/',
                 'max:128',
                 Rule::unique('subdomains', 'name')->where(function ($query) {
                     if ($this->editingModel) {
@@ -124,9 +142,9 @@ class Subdomains extends Section
             'editingModel.locations.*.type'             => 'required',
             'editingModel.locations.*.subtype'          => 'nullable',
             'editingModel.locations.*.target'           => 'required',
-            'editingModel.locations.*.connect_timeout'  => 'sometimes|integer',
-            'editingModel.locations.*.send_timeout'     => 'sometimes|integer',
-            'editingModel.locations.*.read_timeout'     => 'sometimes|integer',
+            'editingModel.locations.*.connect_timeout'  => 'integer',
+            'editingModel.locations.*.send_timeout'     => 'integer',
+            'editingModel.locations.*.read_timeout'     => 'integer',
             'editingModel.locations.*.enable_x_headers' => 'boolean',
         ];
 
@@ -152,7 +170,7 @@ class Subdomains extends Section
 
         $size = count($this->locations);
 
-        $this->locations[1000 + $size] = $location;
+        $this->locations[($size + 1) * -1] = $location;
     }
 
     public function removeLocation(int $index): void
