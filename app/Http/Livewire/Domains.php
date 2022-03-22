@@ -21,7 +21,7 @@ class Domains extends Section
     {
         return [
             'name'              => __('pages.domains.table.domain'),
-            'subdomain_count'   =>__('pages.domains.table.subdomain_count'),
+            'subdomain_count'   => __('pages.domains.table.subdomain_count'),
         ];
     }
 
@@ -37,6 +37,11 @@ class Domains extends Section
         return 'name';
     }
 
+    protected function searchableColumns(): array
+    {
+        return ['name'];
+    }
+
     protected function getRules(): array
     {
         $rules = [
@@ -48,7 +53,7 @@ class Domains extends Section
         ];
 
         if ($this->editingModel?->id !== null) {
-            $rules['editingModel.name'] .= ','.$this->editingModel->id;
+            $rules['editingModel.name'] .= ',' . $this->editingModel->id;
         }
 
         return $rules;

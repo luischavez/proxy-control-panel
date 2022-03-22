@@ -18,6 +18,8 @@ abstract class Section extends Component
 
     public ?array $confirmation = null;
 
+    public string $q = '';
+
     protected abstract function getModelClass(): string;
 
     protected abstract function getFormViewName(): string;
@@ -64,8 +66,19 @@ abstract class Section extends Component
         return null;
     }
 
+    protected function searchableColumns(): array
+    {
+        return [];
+    }
+
     protected function filterResults(Builder $query): Builder
     {
+        $query->where(function ($query) {
+            foreach ($this->searchableColumns() as $column) {
+                $query->where($column, 'like', "%{$this->q}%");
+            }
+        });
+
         return $query;
     }
 
@@ -104,7 +117,8 @@ abstract class Section extends Component
     }
 
     protected function modelChanged(?Model $model): void
-    {}
+    {
+    }
 
     public function create(): void
     {
@@ -164,7 +178,8 @@ abstract class Section extends Component
     }
 
     protected function beforeSave(): void
-    {}
+    {
+    }
 
     public function save(): void
     {

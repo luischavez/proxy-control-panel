@@ -83,6 +83,8 @@ class Subdomains extends Section
 
     protected function filterResults(Builder $query): Builder
     {
+        $query = parent::filterResults($query);
+
         if ($this->domain) {
             $query->whereDomainId($this->domain->id);
         }
@@ -119,6 +121,11 @@ class Subdomains extends Section
     protected function getModelTitleKey(): ?string
     {
         return 'name';
+    }
+
+    protected function searchableColumns(): array
+    {
+        return ['name'];
     }
 
     protected function getRules(): array
